@@ -21,3 +21,20 @@ extension ManagedCache {
 		feed.compactMap { ($0 as? ManagedFeedImage)?.local }
 	}
 }
+
+extension ManagedCache {
+	static func find(in context: NSManagedObjectContext) throws -> ManagedCache? {
+		let fetchRequest = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
+		fetchRequest.returnsObjectsAsFaults = false
+		
+		return try context.fetch(fetchRequest).first
+	}
+	
+	static func newUniqueInstance(in context: NSManagedObjectContext) throws -> ManagedCache {
+		if let existingCache = try find(in: context) {
+			context.delete(existingCache)
+		}
+		
+		return ManagedCache(context: context)
+	}
+}
