@@ -43,11 +43,11 @@ class CoreDataFeedStore: FeedStore {
 				let fetchRequest = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
 				fetchRequest.returnsObjectsAsFaults = false
 				
-				if let cache = try context.fetch(fetchRequest).first {
-					completion(.found(feed: cache.localFeed, timestamp: cache.timestamp))
-				} else {
-					completion(.empty)
+				guard let cache = try context.fetch(fetchRequest).first else {
+					return completion(.empty)
 				}
+				
+				completion(.found(feed: cache.localFeed, timestamp: cache.timestamp))
 			} catch {
 				completion(.failure(error))
 			}
