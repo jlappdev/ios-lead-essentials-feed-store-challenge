@@ -4,19 +4,69 @@
 
 import XCTest
 import FeedStoreChallenge
+import CoreData
 
 class CoreDataFeedStore: FeedStore {
+	
+	private let context: NSManagedObjectContext
+	
+	init(withContext context: NSManagedObjectContext) {
+		self.context = context
+	}
 	
 	func deleteCachedFeed(completion: @escaping DeletionCompletion) {
 		
 	}
 	
 	func insert(_ feed: [LocalFeedImage], timestamp: Date, completion: @escaping InsertionCompletion) {
+		let context = self.context
 		
+		context.perform {
+			do {
+				let managedCache = ManagedCache(context: context)
+				
+				let cacheFeed: [ManagedFeedImage] = feed.map {
+					let managedFeedImage = ManagedFeedImage(context: context)
+					managedFeedImage.id = $0.id
+					managedFeedImage.imageDescription = $0.description
+					managedFeedImage.location = $0.location
+					managedFeedImage.url = $0.url
+					return managedFeedImage
+				}
+				
+				managedCache.feed = NSOrderedSet(array: cacheFeed)
+				managedCache.timestamp = timestamp
+				
+				try context.save()
+				completion(nil)
+			} catch {
+				completion(error)
+			}
+		}
 	}
 	
 	func retrieve(completion: @escaping RetrievalCompletion) {
-		completion(.empty)
+		let context = self.context
+		
+		context.perform {
+			do {
+				let fetchRequest = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
+				fetchRequest.returnsObjectsAsFaults = false
+				
+				if let cache = try context.fetch(fetchRequest).first {
+					let imageFeed = cache.feed
+						.compactMap { $0 as? ManagedFeedImage }
+						.map {
+							LocalFeedImage(id: $0.id, description: $0.imageDescription, location: $0.location, url: $0.url)
+						}
+					completion(.found(feed: imageFeed, timestamp: cache.timestamp))
+				} else {
+					completion(.empty)
+				}
+			} catch {
+				completion(.failure(error))
+			}
+		}
 	}
 }
 
@@ -47,9 +97,9 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	}
 	
 	func test_retrieve_deliversFoundValuesOnNonEmptyCache() {
-		//		let sut = makeSUT()
-		//
-		//		assertThatRetrieveDeliversFoundValuesOnNonEmptyCache(on: sut)
+		let sut = makeSUT()
+		
+		assertThatRetrieveDeliversFoundValuesOnNonEmptyCache(on: sut)
 	}
 	
 	func test_retrieve_hasNoSideEffectsOnNonEmptyCache() {
@@ -109,9 +159,39 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	// - MARK: Helpers
 	
 	private func makeSUT() -> FeedStore {
-		CoreDataFeedStore()
+		CoreDataFeedStore(withContext: makeCoreDataStack())
 	}
 	
+	private func makeCoreDataStack(using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectContext {
+		let managedObjectModel = makeManagedObjectModel()
+		
+		let container = NSPersistentContainer(name: modelName, managedObjectModel: managedObjectModel)
+		
+		let description = NSPersistentStoreDescription()
+		description.url = URL(fileURLWithPath: "/dev/null")
+		container.persistentStoreDescriptions = [description]
+		
+		container.loadPersistentStores { (_, error) in
+			if let error = error {
+				fatalError("Unable to create Core Data Stack. Failed with \(error)")
+			}
+		}
+		
+		return container.newBackgroundContext()
+	}
+	
+	private func makeManagedObjectModel(using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectModel {
+		let storeBundle = Bundle(for: CoreDataFeedStore.self)
+		
+		guard let momURL = storeBundle.url(forResource: modelName, withExtension: "momd") else {
+			fatalError("Unable to locate Core Data Model file in bundle.")
+		}
+		guard let mom = NSManagedObjectModel(contentsOf: momURL) else {
+			fatalError("Unable to load model file into Managed Object Model.")
+		}
+		
+		return mom
+	}
 }
 
 //  ***********************
