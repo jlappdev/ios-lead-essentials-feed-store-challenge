@@ -95,7 +95,10 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	// - MARK: Helpers
 	
 	private func makeSUT() -> FeedStore {
-		CoreDataFeedStore(withContext: makeCoreDataStack())
+		let sut = CoreDataFeedStore(withContext: makeCoreDataStack())
+		trackForMemoryLeaks(sut)
+		
+		return sut
 	}
 	
 	private func makeCoreDataStack(using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectContext {
@@ -127,6 +130,14 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		}
 		
 		return mom
+	}
+}
+
+private extension XCTestCase {
+	func trackForMemoryLeaks(_ instance: AnyObject, file: StaticString = #file, line: UInt = #line) {
+		addTeardownBlock { [weak instance] in
+			XCTAssertNil(instance, "Instance should have been deallocated, but was not. Potential memory leak detected.", file: file, line: line)
+		}
 	}
 }
 
