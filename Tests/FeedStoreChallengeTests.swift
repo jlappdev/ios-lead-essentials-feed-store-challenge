@@ -6,63 +6,6 @@ import XCTest
 import FeedStoreChallenge
 import CoreData
 
-class CoreDataFeedStore: FeedStore {
-	
-	private let context: NSManagedObjectContext
-	
-	init(withContext context: NSManagedObjectContext) {
-		self.context = context
-	}
-	
-	func deleteCachedFeed(completion: @escaping DeletionCompletion) {
-		let context = self.context
-		
-		context.perform {
-			do {
-				if let managedCache = try ManagedCache.find(in: context) {
-					context.delete(managedCache)
-					try context.save()
-				}
-				completion(nil)
-			} catch {
-				completion(error)
-			}
-		}
-	}
-	
-	func insert(_ feed: [LocalFeedImage], timestamp: Date, completion: @escaping InsertionCompletion) {
-		let context = self.context
-		
-		context.perform {
-			do {
-				let managedCache = try ManagedCache.newUniqueInstance(in: context)
-				managedCache.feed = ManagedFeedImage.managedImages(from: feed, in: context)
-				managedCache.timestamp = timestamp
-				
-				try context.save()
-				completion(nil)
-			} catch {
-				completion(error)
-			}
-		}
-	}
-	
-	func retrieve(completion: @escaping RetrievalCompletion) {
-		let context = self.context
-		
-		context.perform {
-			do {
-				guard let cache = try ManagedCache.find(in: context) else {
-					return completion(.empty)
-				}
-				completion(.found(feed: cache.localFeed, timestamp: cache.timestamp))
-			} catch {
-				completion(.failure(error))
-			}
-		}
-	}
-}
-
 class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	
 	//  ***********************

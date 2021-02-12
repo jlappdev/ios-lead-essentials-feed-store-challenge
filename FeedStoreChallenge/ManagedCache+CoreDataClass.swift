@@ -9,10 +9,9 @@
 
 import Foundation
 import CoreData
-import FeedStoreChallenge
 
 @objc(ManagedCache)
-public class ManagedCache: NSManagedObject {
+class ManagedCache: NSManagedObject {
 
 }
 
