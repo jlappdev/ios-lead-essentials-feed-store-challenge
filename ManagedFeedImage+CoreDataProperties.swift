@@ -24,7 +24,3 @@ extension ManagedFeedImage {
     @NSManaged public var cache: ManagedCache
 
 }
-
-extension ManagedFeedImage : Identifiable {
-
-}

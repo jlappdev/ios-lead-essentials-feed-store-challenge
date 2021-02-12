@@ -54,12 +54,7 @@ class CoreDataFeedStore: FeedStore {
 				fetchRequest.returnsObjectsAsFaults = false
 				
 				if let cache = try context.fetch(fetchRequest).first {
-					let imageFeed = cache.feed
-						.compactMap { $0 as? ManagedFeedImage }
-						.map {
-							LocalFeedImage(id: $0.id, description: $0.imageDescription, location: $0.location, url: $0.url)
-						}
-					completion(.found(feed: imageFeed, timestamp: cache.timestamp))
+					completion(.found(feed: cache.localFeed, timestamp: cache.timestamp))
 				} else {
 					completion(.empty)
 				}
@@ -121,9 +116,9 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	}
 	
 	func test_insert_overridesPreviouslyInsertedCacheValues() {
-		//		let sut = makeSUT()
-		//
-		//		assertThatInsertOverridesPreviouslyInsertedCacheValues(on: sut)
+//		let sut = makeSUT()
+//		
+//		assertThatInsertOverridesPreviouslyInsertedCacheValues(on: sut)
 	}
 	
 	func test_delete_deliversNoErrorOnEmptyCache() {

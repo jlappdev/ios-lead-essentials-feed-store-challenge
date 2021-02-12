@@ -9,8 +9,15 @@
 
 import Foundation
 import CoreData
+import FeedStoreChallenge
 
 @objc(ManagedCache)
 public class ManagedCache: NSManagedObject {
 
+}
+
+extension ManagedCache {
+	var localFeed: [LocalFeedImage] {
+		feed.compactMap { ($0 as? ManagedFeedImage)?.local }
+	}
 }

@@ -9,8 +9,15 @@
 
 import Foundation
 import CoreData
+import FeedStoreChallenge
 
 @objc(ManagedFeedImage)
 public class ManagedFeedImage: NSManagedObject {
 
+}
+
+extension ManagedFeedImage {
+	var local: LocalFeedImage {
+		LocalFeedImage(id: id, description: imageDescription, location: location, url: url)
+	}
 }
