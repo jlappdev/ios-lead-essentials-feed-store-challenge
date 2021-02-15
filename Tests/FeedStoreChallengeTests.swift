@@ -131,14 +131,6 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	}
 }
 
-private extension XCTestCase {
-	func trackForMemoryLeaks(_ instance: AnyObject, file: StaticString = #file, line: UInt = #line) {
-		addTeardownBlock { [weak instance] in
-			XCTAssertNil(instance, "Instance should have been deallocated, but was not. Potential memory leak detected.", file: file, line: line)
-		}
-	}
-}
-
 //  ***********************
 //
 //  Uncomment the following tests if your implementation has failable operations.
