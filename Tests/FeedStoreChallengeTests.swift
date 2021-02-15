@@ -95,21 +95,19 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	// - MARK: Helpers
 	
 	private func makeSUT() -> FeedStore {
-		let sut = CoreDataFeedStore(withContext: makeCoreDataStack())
+		let storeURL = URL(fileURLWithPath: "/dev/null")
+		let sut = CoreDataFeedStore(withContext: makeCoreDataStack(at: storeURL))
 		trackForMemoryLeaks(sut)
 		
 		return sut
 	}
 	
-	private func makeCoreDataStack(using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectContext {
+	private func makeCoreDataStack(at url: URL, using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectContext {
 		let managedObjectModel = makeManagedObjectModel()
-		
+		let description = NSPersistentStoreDescription(url: url)
 		let container = NSPersistentContainer(name: modelName, managedObjectModel: managedObjectModel)
 		
-		let description = NSPersistentStoreDescription()
-		description.url = URL(fileURLWithPath: "/dev/null")
 		container.persistentStoreDescriptions = [description]
-		
 		container.loadPersistentStores { (_, error) in
 			if let error = error {
 				fatalError("Unable to create Core Data Stack. Failed with \(error)")
