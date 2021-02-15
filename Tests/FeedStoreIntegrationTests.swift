@@ -27,9 +27,9 @@ class FeedStoreIntegrationTests: XCTestCase {
 	}
 	
 	func test_retrieve_deliversEmptyOnEmptyCache() {
-		//        let sut = makeSUT()
-		//
-		//        expect(sut, toRetrieve: .empty)
+		let sut = makeSUT()
+		
+		expect(sut, toRetrieve: .empty)
 	}
 	
 	func test_retrieve_deliversFeedInsertedOnAnotherInstance() {
@@ -72,15 +72,65 @@ class FeedStoreIntegrationTests: XCTestCase {
 	// - MARK: Helpers
 	
 	private func makeSUT() -> FeedStore {
-		fatalError("Must be implemented")
+		let sut = CoreDataFeedStore(withContext: makeCoreDataStack(at: testSpecificStoreURL()))
+		trackForMemoryLeaks(sut)
+		
+		return sut
+	}
+	
+	private func makeCoreDataStack(at url: URL, using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectContext {
+		let managedObjectModel = makeManagedObjectModel()
+		let description = NSPersistentStoreDescription(url: url)
+		let container = NSPersistentContainer(name: modelName, managedObjectModel: managedObjectModel)
+		
+		container.persistentStoreDescriptions = [description]
+		container.loadPersistentStores { (_, error) in
+			if let error = error {
+				fatalError("Unable to create Core Data Stack. Failed with \(error)")
+			}
+		}
+		
+		return container.newBackgroundContext()
+	}
+	
+	private func makeManagedObjectModel(using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectModel {
+		let storeBundle = Bundle(for: CoreDataFeedStore.self)
+		
+		guard let momURL = storeBundle.url(forResource: modelName, withExtension: "momd") else {
+			fatalError("Unable to locate Core Data Model file in bundle.")
+		}
+		guard let mom = NSManagedObjectModel(contentsOf: momURL) else {
+			fatalError("Unable to load model file into Managed Object Model.")
+		}
+		
+		return mom
 	}
 	
 	private func setupEmptyStoreState() {
-		
+		deleteStoreArtifacts()
 	}
 	
 	private func undoStoreSideEffects() {
-		
+		deleteStoreArtifacts()
 	}
 	
+	private func deleteStoreArtifacts() {
+		try? FileManager.default.removeItem(at: testSpecificStoreURL())
+	}
+	
+	private func testSpecificStoreURL() -> URL {
+		return cachesDirectory().appendingPathComponent("\(type(of: self)).store")
+	}
+	
+	private func cachesDirectory() -> URL {
+		return FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+	}
+}
+
+private extension XCTestCase {
+	func trackForMemoryLeaks(_ instance: AnyObject, file: StaticString = #file, line: UInt = #line) {
+		addTeardownBlock { [weak instance] in
+			XCTAssertNil(instance, "Instance should have been deallocated, but was not. Potential memory leak detected.", file: file, line: line)
+		}
+	}
 }
