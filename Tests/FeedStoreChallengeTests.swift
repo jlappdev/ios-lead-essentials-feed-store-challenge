@@ -159,11 +159,11 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	}
 	
 	private class ManagedObjectContextStub: NSManagedObjectContext {
-		var error: Error?
+		var saveError: Error?
 		var fetchError: Error?
 		
 		override func save() throws {
-			if let error = error {
+			if let error = saveError {
 				self.reset()
 				throw error
 			}
@@ -207,14 +207,14 @@ extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
 
 	func test_insert_deliversErrorOnInsertionError() {
 		let (sut, context) = makeSUTUsingStubbedContext()
-		context.error = anyNSError()
+		context.saveError = anyNSError()
 
 		assertThatInsertDeliversErrorOnInsertionError(on: sut)
 	}
 
 	func test_insert_hasNoSideEffectsOnInsertionError() {
 		let (sut, context) = makeSUTUsingStubbedContext()
-		context.error = anyNSError()
+		context.saveError = anyNSError()
 		
 		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
 	}
@@ -225,14 +225,14 @@ extension FeedStoreChallengeTests: FailableDeleteFeedStoreSpecs {
 
 	func test_delete_deliversErrorOnDeletionError() {
 		let (sut, context) = makeSUTUsingStubbedContext()
-		context.error = anyNSError()
+		context.saveError = anyNSError()
 
 		assertThatDeleteDeliversErrorOnDeletionError(on: sut)
 	}
 
 	func test_delete_hasNoSideEffectsOnDeletionError() {
 		let (sut, context) = makeSUTUsingStubbedContext()
-		context.error = anyNSError()
+		context.saveError = anyNSError()
 
 		assertThatDeleteHasNoSideEffectsOnDeletionError(on: sut)
 	}
