@@ -130,7 +130,7 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		return mom
 	}
 	
-	private func makeSUTUsingStub(file: StaticString = #file, line: UInt = #line) -> (sut: FeedStore, context: ManagedObjectContextStub) {
+	private func makeSUTUsingStubbedContext(file: StaticString = #file, line: UInt = #line) -> (sut: FeedStore, context: ManagedObjectContextStub) {
 		let storeURL = URL(fileURLWithPath: "/dev/null")
 		let context = makeStubbedCoreDataStack(at: storeURL)
 		let sut = CoreDataFeedStore(withContext: context)
@@ -196,14 +196,14 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
 
 	func test_insert_deliversErrorOnInsertionError() {
-		let (sut, context) = makeSUTUsingStub()
+		let (sut, context) = makeSUTUsingStubbedContext()
 		context.error = anyNSError()
 
 		assertThatInsertDeliversErrorOnInsertionError(on: sut)
 	}
 
 	func test_insert_hasNoSideEffectsOnInsertionError() {
-		let (sut, context) = makeSUTUsingStub()
+		let (sut, context) = makeSUTUsingStubbedContext()
 		context.error = anyNSError()
 		
 		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
@@ -214,14 +214,14 @@ extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
 extension FeedStoreChallengeTests: FailableDeleteFeedStoreSpecs {
 
 	func test_delete_deliversErrorOnDeletionError() {
-		let (sut, context) = makeSUTUsingStub()
+		let (sut, context) = makeSUTUsingStubbedContext()
 		context.error = anyNSError()
 
 		assertThatDeleteDeliversErrorOnDeletionError(on: sut)
 	}
 
 	func test_delete_hasNoSideEffectsOnDeletionError() {
-		let (sut, context) = makeSUTUsingStub()
+		let (sut, context) = makeSUTUsingStubbedContext()
 		context.error = anyNSError()
 
 		assertThatDeleteHasNoSideEffectsOnDeletionError(on: sut)
