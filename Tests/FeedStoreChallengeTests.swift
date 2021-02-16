@@ -135,6 +135,7 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		
 		override func save() throws {
 			if let error = error {
+				self.reset()
 				throw error
 			}
 		}
@@ -192,9 +193,28 @@ extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
 	}
 
 	func test_insert_hasNoSideEffectsOnInsertionError() {
-//		let sut = makeSUT()
-//
-//		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
+		let storeURL = URL(fileURLWithPath: "/dev/null")
+		
+		let mom = makeManagedObjectModel()
+		let coordinator = NSPersistentStoreCoordinator(managedObjectModel: mom)
+		
+		let description = NSPersistentStoreDescription(url: storeURL)
+		description.type = NSSQLiteStoreType
+		
+		coordinator.addPersistentStore(with: description) { (_, error) in
+			if let error = error {
+				fatalError("Unable to create Core Data Stack. Failed with \(error)")
+			}
+		}
+		
+		let context = ManagedObjectContextStub(concurrencyType: .privateQueueConcurrencyType)
+		context.persistentStoreCoordinator = coordinator
+		
+		context.error = anyNSError()
+		let sut = CoreDataFeedStore(withContext: context)
+		trackForMemoryLeaks(sut)
+		
+		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
 	}
 
 }
