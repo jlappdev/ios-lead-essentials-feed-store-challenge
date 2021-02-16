@@ -95,8 +95,7 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	// - MARK: Helpers
 	
 	private func makeSUT(file: StaticString = #file, line: UInt = #line) -> FeedStore {
-		let storeURL = URL(fileURLWithPath: "/dev/null")
-		let sut = CoreDataFeedStore(withContext: makeCoreDataStack(at: storeURL))
+		let sut = CoreDataFeedStore(withContext: makeCoreDataStack(at: testStoreURL()))
 		trackForMemoryLeaks(sut, file: file, line: line)
 		
 		return sut
@@ -131,8 +130,7 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	}
 	
 	private func makeSUTUsingStubbedContext(file: StaticString = #file, line: UInt = #line) -> (sut: FeedStore, context: ManagedObjectContextStub) {
-		let storeURL = URL(fileURLWithPath: "/dev/null")
-		let context = makeStubbedCoreDataStack(at: storeURL)
+		let context = makeStubbedCoreDataStack(at: testStoreURL())
 		let sut = CoreDataFeedStore(withContext: context)
 		trackForMemoryLeaks(sut, file: file, line: line)
 		
@@ -156,6 +154,10 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		context.persistentStoreCoordinator = coordinator
 		
 		return context
+	}
+	
+	private func testStoreURL() -> URL {
+		URL(fileURLWithPath: "/dev/null")
 	}
 	
 	private class ManagedObjectContextStub: NSManagedObjectContext {
