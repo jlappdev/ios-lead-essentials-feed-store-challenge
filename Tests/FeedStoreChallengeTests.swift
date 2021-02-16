@@ -130,6 +130,34 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		return mom
 	}
 	
+	private func makeSUTUsingStub(file: StaticString = #file, line: UInt = #line) -> (sut: FeedStore, context: ManagedObjectContextStub) {
+		let storeURL = URL(fileURLWithPath: "/dev/null")
+		let context = makeStubbedCoreDataStack(at: storeURL)
+		let sut = CoreDataFeedStore(withContext: context)
+		trackForMemoryLeaks(sut, file: file, line: line)
+		
+		return (sut, context)
+	}
+	
+	private func makeStubbedCoreDataStack(at url: URL, using modelName: String = "FeedStoreChallengeModel") -> ManagedObjectContextStub {
+		let managedObjectModel = makeManagedObjectModel()
+		let coordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
+		
+		let description = NSPersistentStoreDescription(url: url)
+		description.type = NSSQLiteStoreType
+		
+		coordinator.addPersistentStore(with: description) { (_, error) in
+			if let error = error {
+				fatalError("Unable to create Core Data Stack. Failed with \(error)")
+			}
+		}
+		
+		let context = ManagedObjectContextStub(concurrencyType: .privateQueueConcurrencyType)
+		context.persistentStoreCoordinator = coordinator
+		
+		return context
+	}
+	
 	private class ManagedObjectContextStub: NSManagedObjectContext {
 		var error: Error?
 		
@@ -168,51 +196,15 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
 
 	func test_insert_deliversErrorOnInsertionError() {
-		let storeURL = URL(fileURLWithPath: "/dev/null")
-		
-		let mom = makeManagedObjectModel()
-		let coordinator = NSPersistentStoreCoordinator(managedObjectModel: mom)
-		
-		let description = NSPersistentStoreDescription(url: storeURL)
-		description.type = NSSQLiteStoreType
-		
-		coordinator.addPersistentStore(with: description) { (_, error) in
-			if let error = error {
-				fatalError("Unable to create Core Data Stack. Failed with \(error)")
-			}
-		}
-		
-		let context = ManagedObjectContextStub(concurrencyType: .privateQueueConcurrencyType)
-		context.persistentStoreCoordinator = coordinator
-		
+		let (sut, context) = makeSUTUsingStub()
 		context.error = anyNSError()
-		let sut = CoreDataFeedStore(withContext: context)
-		trackForMemoryLeaks(sut)
 
 		assertThatInsertDeliversErrorOnInsertionError(on: sut)
 	}
 
 	func test_insert_hasNoSideEffectsOnInsertionError() {
-		let storeURL = URL(fileURLWithPath: "/dev/null")
-		
-		let mom = makeManagedObjectModel()
-		let coordinator = NSPersistentStoreCoordinator(managedObjectModel: mom)
-		
-		let description = NSPersistentStoreDescription(url: storeURL)
-		description.type = NSSQLiteStoreType
-		
-		coordinator.addPersistentStore(with: description) { (_, error) in
-			if let error = error {
-				fatalError("Unable to create Core Data Stack. Failed with \(error)")
-			}
-		}
-		
-		let context = ManagedObjectContextStub(concurrencyType: .privateQueueConcurrencyType)
-		context.persistentStoreCoordinator = coordinator
-		
+		let (sut, context) = makeSUTUsingStub()
 		context.error = anyNSError()
-		let sut = CoreDataFeedStore(withContext: context)
-		trackForMemoryLeaks(sut)
 		
 		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
 	}
