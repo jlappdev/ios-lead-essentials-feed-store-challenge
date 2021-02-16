@@ -129,6 +129,16 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		
 		return mom
 	}
+	
+	private class ManagedObjectContextStub: NSManagedObjectContext {
+		var error: Error?
+		
+		override func save() throws {
+			if let error = error {
+				throw error
+			}
+		}
+	}
 }
 
 //  ***********************
@@ -148,28 +158,46 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 //	}
 //
 //	func test_retrieve_hasNoSideEffectsOnFailure() {
-////		let sut = makeSUT()
-////
-////		assertThatRetrieveHasNoSideEffectsOnFailure(on: sut)
-//	}
+//		let sut = makeSUT()
 //
+//		assertThatRetrieveHasNoSideEffectsOnFailure(on: sut)
+//	}
 //}
 
-//extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
+extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
+
+	func test_insert_deliversErrorOnInsertionError() {
+		let storeURL = URL(fileURLWithPath: "/dev/null")
+		
+		let mom = makeManagedObjectModel()
+		let coordinator = NSPersistentStoreCoordinator(managedObjectModel: mom)
+		
+		let description = NSPersistentStoreDescription(url: storeURL)
+		description.type = NSSQLiteStoreType
+		
+		coordinator.addPersistentStore(with: description) { (_, error) in
+			if let error = error {
+				fatalError("Unable to create Core Data Stack. Failed with \(error)")
+			}
+		}
+		
+		let context = ManagedObjectContextStub(concurrencyType: .privateQueueConcurrencyType)
+		context.persistentStoreCoordinator = coordinator
+		
+		context.error = anyNSError()
+		let sut = CoreDataFeedStore(withContext: context)
+		trackForMemoryLeaks(sut)
+
+		assertThatInsertDeliversErrorOnInsertionError(on: sut)
+	}
+
+	func test_insert_hasNoSideEffectsOnInsertionError() {
+//		let sut = makeSUT()
 //
-//	func test_insert_deliversErrorOnInsertionError() {
-////		let sut = makeSUT()
-////
-////		assertThatInsertDeliversErrorOnInsertionError(on: sut)
-//	}
-//
-//	func test_insert_hasNoSideEffectsOnInsertionError() {
-////		let sut = makeSUT()
-////
-////		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
-//	}
-//
-//}
+//		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
+	}
+
+}
 
 //extension FeedStoreChallengeTests: FailableDeleteFeedStoreSpecs {
 //
