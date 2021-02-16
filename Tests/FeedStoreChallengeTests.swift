@@ -160,11 +160,20 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	
 	private class ManagedObjectContextStub: NSManagedObjectContext {
 		var error: Error?
+		var fetchError: Error?
 		
 		override func save() throws {
 			if let error = error {
 				self.reset()
 				throw error
+			}
+		}
+		
+		override func fetch(_ request: NSFetchRequest<NSFetchRequestResult>) throws -> [Any] {
+			if let error = fetchError {
+				throw error
+			} else {
+				return try super.fetch(request)
 			}
 		}
 	}
@@ -178,20 +187,21 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 //
 //  ***********************
 
-//extension FeedStoreChallengeTests: FailableRetrieveFeedStoreSpecs {
-//
-//	func test_retrieve_deliversFailureOnRetrievalError() {
-////		let sut = makeSUT()
-////
-////		assertThatRetrieveDeliversFailureOnRetrievalError(on: sut)
-//	}
-//
-//	func test_retrieve_hasNoSideEffectsOnFailure() {
+extension FeedStoreChallengeTests: FailableRetrieveFeedStoreSpecs {
+
+	func test_retrieve_deliversFailureOnRetrievalError() {
+		let (sut, context) = makeSUTUsingStubbedContext()
+		context.fetchError = anyNSError()
+
+		assertThatRetrieveDeliversFailureOnRetrievalError(on: sut)
+	}
+
+	func test_retrieve_hasNoSideEffectsOnFailure() {
 //		let sut = makeSUT()
 //
 //		assertThatRetrieveHasNoSideEffectsOnFailure(on: sut)
-//	}
-//}
+	}
+}
 
 extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
 
