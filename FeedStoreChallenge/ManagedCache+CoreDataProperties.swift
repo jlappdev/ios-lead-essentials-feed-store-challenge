@@ -12,8 +12,8 @@ import CoreData
 
 
 extension ManagedCache {
-    @NSManaged public var timestamp: Date
-    @NSManaged public var feed: NSOrderedSet
+    @NSManaged var timestamp: Date
+    @NSManaged var feed: NSOrderedSet
 
 }
 
