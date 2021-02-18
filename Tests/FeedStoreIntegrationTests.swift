@@ -72,13 +72,13 @@ class FeedStoreIntegrationTests: XCTestCase {
 	// - MARK: Helpers
 	
 	private func makeSUT(file: StaticString = #file, line: UInt = #line) -> FeedStore {
-		let sut = CoreDataFeedStore(withContext: makeCoreDataStack(at: testSpecificStoreURL()))
+		let sut = CoreDataFeedStore(usingContainer: makeCoreDataStack(at: testSpecificStoreURL()))
 		trackForMemoryLeaks(sut, file: file, line: line)
 		
 		return sut
 	}
 	
-	private func makeCoreDataStack(at url: URL, using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectContext {
+	private func makeCoreDataStack(at url: URL, using modelName: String = "FeedStoreChallengeModel") -> NSPersistentContainer {
 		let managedObjectModel = makeManagedObjectModel()
 		let description = NSPersistentStoreDescription(url: url)
 		let container = NSPersistentContainer(name: modelName, managedObjectModel: managedObjectModel)
@@ -90,7 +90,7 @@ class FeedStoreIntegrationTests: XCTestCase {
 			}
 		}
 		
-		return container.newBackgroundContext()
+		return container
 	}
 	
 	private func makeManagedObjectModel(using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectModel {
