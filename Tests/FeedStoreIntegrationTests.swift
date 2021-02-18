@@ -72,38 +72,11 @@ class FeedStoreIntegrationTests: XCTestCase {
 	// - MARK: Helpers
 	
 	private func makeSUT(file: StaticString = #file, line: UInt = #line) -> FeedStore {
-		let sut = CoreDataFeedStore(usingContainer: makeCoreDataStack(at: testSpecificStoreURL()))
+		let storeBundle = Bundle(for: CoreDataFeedStore.self)
+		let sut = try! CoreDataFeedStore(storeURL: testSpecificStoreURL(), bundle: storeBundle)
 		trackForMemoryLeaks(sut, file: file, line: line)
 		
 		return sut
-	}
-	
-	private func makeCoreDataStack(at url: URL) -> NSPersistentContainer {
-		let managedObjectModel = makeManagedObjectModel()
-		let description = NSPersistentStoreDescription(url: url)
-		let container = NSPersistentContainer(name: "FeedStoreChallengeModel", managedObjectModel: managedObjectModel)
-		
-		container.persistentStoreDescriptions = [description]
-		container.loadPersistentStores { (_, error) in
-			if let error = error {
-				fatalError("Unable to create Core Data Stack. Failed with \(error)")
-			}
-		}
-		
-		return container
-	}
-	
-	private func makeManagedObjectModel() -> NSManagedObjectModel {
-		let storeBundle = Bundle(for: CoreDataFeedStore.self)
-		
-		guard let momURL = storeBundle.url(forResource: "FeedStoreChallengeModel", withExtension: "momd") else {
-			fatalError("Unable to locate Core Data Model file in bundle.")
-		}
-		guard let mom = NSManagedObjectModel(contentsOf: momURL) else {
-			fatalError("Unable to load model file into Managed Object Model.")
-		}
-		
-		return mom
 	}
 	
 	private func setupEmptyStoreState() {
