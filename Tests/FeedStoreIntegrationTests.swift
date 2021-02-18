@@ -78,10 +78,10 @@ class FeedStoreIntegrationTests: XCTestCase {
 		return sut
 	}
 	
-	private func makeCoreDataStack(at url: URL, using modelName: String = "FeedStoreChallengeModel") -> NSPersistentContainer {
+	private func makeCoreDataStack(at url: URL) -> NSPersistentContainer {
 		let managedObjectModel = makeManagedObjectModel()
 		let description = NSPersistentStoreDescription(url: url)
-		let container = NSPersistentContainer(name: modelName, managedObjectModel: managedObjectModel)
+		let container = NSPersistentContainer(name: "FeedStoreChallengeModel", managedObjectModel: managedObjectModel)
 		
 		container.persistentStoreDescriptions = [description]
 		container.loadPersistentStores { (_, error) in
@@ -93,10 +93,10 @@ class FeedStoreIntegrationTests: XCTestCase {
 		return container
 	}
 	
-	private func makeManagedObjectModel(using modelName: String = "FeedStoreChallengeModel") -> NSManagedObjectModel {
+	private func makeManagedObjectModel() -> NSManagedObjectModel {
 		let storeBundle = Bundle(for: CoreDataFeedStore.self)
 		
-		guard let momURL = storeBundle.url(forResource: modelName, withExtension: "momd") else {
+		guard let momURL = storeBundle.url(forResource: "FeedStoreChallengeModel", withExtension: "momd") else {
 			fatalError("Unable to locate Core Data Model file in bundle.")
 		}
 		guard let mom = NSManagedObjectModel(contentsOf: momURL) else {
