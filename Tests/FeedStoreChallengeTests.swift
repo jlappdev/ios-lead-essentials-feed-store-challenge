@@ -98,6 +98,13 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		XCTAssertThrowsError(try CoreDataFeedStore(storeURL: testStoreURL))
 	}
 	
+	func test_init_throwsErrorWhenUnableToLoadPersistentStore() {
+		let storeBundle = Bundle(for: CoreDataFeedStore.self)
+		let invalidStoreURL = FileManager.default.urls(for: .cachesDirectory, in: .systemDomainMask).first!.appendingPathComponent("\(type(of: self)).store")
+		
+		XCTAssertThrowsError(try CoreDataFeedStore(storeURL: invalidStoreURL, bundle: storeBundle))
+	}
+	
 	// - MARK: Helpers
 	
 	private func makeSUT(file: StaticString = #file, line: UInt = #line) -> FeedStore {
