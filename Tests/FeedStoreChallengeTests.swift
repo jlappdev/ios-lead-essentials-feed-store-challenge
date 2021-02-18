@@ -130,34 +130,41 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 	}
 	
 	private func makeSUTUsingStubbedContext(file: StaticString = #file, line: UInt = #line) -> (sut: FeedStore, context: ManagedObjectContextStub) {
-		let context = makeStubbedCoreDataStack(at: testStoreURL())
-		let sut = CoreDataFeedStore(withContext: context)
-		trackForMemoryLeaks(sut, file: file, line: line)
-		
-		return (sut, context)
-	}
-	
-	private func makeStubbedCoreDataStack(at url: URL, using modelName: String = "FeedStoreChallengeModel") -> ManagedObjectContextStub {
 		let managedObjectModel = makeManagedObjectModel()
-		let coordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
+		let description = NSPersistentStoreDescription(url: testStoreURL())
+		let context = ManagedObjectContextStub(concurrencyType: .privateQueueConcurrencyType)
+		let container = FakeNSPersistentContainer(name: "FeedStoreChallengeModel", managedObjectModel: managedObjectModel)
 		
-		let description = NSPersistentStoreDescription(url: url)
-		description.type = NSSQLiteStoreType
-		
-		coordinator.addPersistentStore(with: description) { (_, error) in
+		context.persistentStoreCoordinator = container.persistentStoreCoordinator
+		container.context = context
+		container.persistentStoreDescriptions = [description]
+		container.loadPersistentStores { (_, error) in
 			if let error = error {
 				fatalError("Unable to create Core Data Stack. Failed with \(error)")
 			}
 		}
 		
-		let context = ManagedObjectContextStub(concurrencyType: .privateQueueConcurrencyType)
-		context.persistentStoreCoordinator = coordinator
+		let sut = CoreDataFeedStore(usingContainer: container)
+		trackForMemoryLeaks(sut, file: file, line: line)
 		
-		return context
+		return (sut, context)
 	}
+	
 	
 	private func testStoreURL() -> URL {
 		URL(fileURLWithPath: "/dev/null")
+	}
+	
+	private class FakeNSPersistentContainer: NSPersistentContainer {
+		var context: NSManagedObjectContext?
+		
+		override func newBackgroundContext() -> NSManagedObjectContext {
+			guard context != nil else {
+				return NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+			}
+			
+			return context!
+		}
 	}
 	
 	private class ManagedObjectContextStub: NSManagedObjectContext {
@@ -168,6 +175,8 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 			if let error = saveError {
 				self.reset()
 				throw error
+			} else {
+				try super.save()
 			}
 		}
 		
@@ -189,54 +198,54 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 //
 //  ***********************
 
-//extension FeedStoreChallengeTests: FailableRetrieveFeedStoreSpecs {
-//
-//	func test_retrieve_deliversFailureOnRetrievalError() {
-//		let (sut, context) = makeSUTUsingStubbedContext()
-//		context.fetchError = anyNSError()
-//
-//		assertThatRetrieveDeliversFailureOnRetrievalError(on: sut)
-//	}
-//
-//	func test_retrieve_hasNoSideEffectsOnFailure() {
-//		let (sut, context) = makeSUTUsingStubbedContext()
-//		context.fetchError = anyNSError()
-//
-//		assertThatRetrieveHasNoSideEffectsOnFailure(on: sut)
-//	}
-//}
-//
-//extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
-//
-//	func test_insert_deliversErrorOnInsertionError() {
-//		let (sut, context) = makeSUTUsingStubbedContext()
-//		context.saveError = anyNSError()
-//
-//		assertThatInsertDeliversErrorOnInsertionError(on: sut)
-//	}
-//
-//	func test_insert_hasNoSideEffectsOnInsertionError() {
-//		let (sut, context) = makeSUTUsingStubbedContext()
-//		context.saveError = anyNSError()
-//
-//		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
-//	}
-//
-//}
-//
-//extension FeedStoreChallengeTests: FailableDeleteFeedStoreSpecs {
-//
-//	func test_delete_deliversErrorOnDeletionError() {
-//		let (sut, context) = makeSUTUsingStubbedContext()
-//		context.saveError = anyNSError()
-//
-//		assertThatDeleteDeliversErrorOnDeletionError(on: sut)
-//	}
-//
-//	func test_delete_hasNoSideEffectsOnDeletionError() {
-//		let (sut, context) = makeSUTUsingStubbedContext()
-//		context.saveError = anyNSError()
-//
-//		assertThatDeleteHasNoSideEffectsOnDeletionError(on: sut)
-//	}
-//}
+extension FeedStoreChallengeTests: FailableRetrieveFeedStoreSpecs {
+
+	func test_retrieve_deliversFailureOnRetrievalError() {
+		let (sut, context) = makeSUTUsingStubbedContext()
+		context.fetchError = anyNSError()
+
+		assertThatRetrieveDeliversFailureOnRetrievalError(on: sut)
+	}
+
+	func test_retrieve_hasNoSideEffectsOnFailure() {
+		let (sut, context) = makeSUTUsingStubbedContext()
+		context.fetchError = anyNSError()
+
+		assertThatRetrieveHasNoSideEffectsOnFailure(on: sut)
+	}
+}
+
+extension FeedStoreChallengeTests: FailableInsertFeedStoreSpecs {
+
+	func test_insert_deliversErrorOnInsertionError() {
+		let (sut, context) = makeSUTUsingStubbedContext()
+		context.saveError = anyNSError()
+
+		assertThatInsertDeliversErrorOnInsertionError(on: sut)
+	}
+
+	func test_insert_hasNoSideEffectsOnInsertionError() {
+		let (sut, context) = makeSUTUsingStubbedContext()
+		context.saveError = anyNSError()
+
+		assertThatInsertHasNoSideEffectsOnInsertionError(on: sut)
+	}
+
+}
+
+extension FeedStoreChallengeTests: FailableDeleteFeedStoreSpecs {
+
+	func test_delete_deliversErrorOnDeletionError() {
+		let (sut, context) = makeSUTUsingStubbedContext()
+		context.saveError = anyNSError()
+
+		assertThatDeleteDeliversErrorOnDeletionError(on: sut)
+	}
+
+	func test_delete_hasNoSideEffectsOnDeletionError() {
+		let (sut, context) = makeSUTUsingStubbedContext()
+		context.saveError = anyNSError()
+
+		assertThatDeleteHasNoSideEffectsOnDeletionError(on: sut)
+	}
+}
