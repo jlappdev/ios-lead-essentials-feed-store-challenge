@@ -92,6 +92,12 @@ class FeedStoreChallengeTests: XCTestCase, FeedStoreSpecs {
 		assertThatSideEffectsRunSerially(on: sut)
 	}
 	
+	func test_init_throwsErrorWhenUnableToLocateModel() {
+		let testStoreURL = URL(fileURLWithPath: "/dev/null")
+		
+		XCTAssertThrowsError(try CoreDataFeedStore(storeURL: testStoreURL))
+	}
+	
 	// - MARK: Helpers
 	
 	private func makeSUT(file: StaticString = #file, line: UInt = #line) -> FeedStore {
